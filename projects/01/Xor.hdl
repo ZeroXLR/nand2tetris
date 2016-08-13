@@ -1,0 +1,28 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Xor.hdl
+
+/**
+ * Exclusive-or gate:
+ * out = not (a == b)
+ * a xor b = (~a and b) or (a and ~b) = ~(~(~a and b) and ~(a and ~b))
+ *         = ~~(~a nand b) nand ~~(a nand ~b) = (~a nand b) nand (a nand ~b)
+ *         = ((a nand b) nand b) nand (a nand (a nand b))
+ *         ^w.r.t. truth tables, (a nand b) can replace ~a, ~b in this case
+ * This should be a more efficient implementation than a direct translation
+ * of (~a and b) or (a and ~b) because of the crucial ~~ elimination and
+ * the above replacement of two different terms (~a, ~b) by one expression
+ */
+
+CHIP Xor {
+    IN a, b;
+    OUT out;
+
+    PARTS:
+    // Put your code here:
+    Nand (a=a, b=b, out=t00);
+    Nand (a=a, b=t00, out=t10);
+    Nand (a=t00, b=b, out=t01);
+    Nand (a=t10, b=t01, out=out);
+}

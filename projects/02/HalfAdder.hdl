@@ -1,0 +1,33 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/02/HalfAdder.hdl
+
+/**
+ * Computes the sum of two bits.
+ * Straightforward implementation:
+ * sum = a xor b; carry = a and b
+ * It uses 6 nand gates. If you wish, we can
+ * reduce that to 5 gates by using the first
+ * gate in xor as the first gate in and
+ */
+
+CHIP HalfAdder {
+    IN a, b;    // 1-bit inputs
+    OUT sum,    // Right bit of a + b
+        carry;  // Left bit of a + b
+
+    PARTS:
+    // Put you code here:
+    Xor (a=a, b=b, out=sum);
+    And (a=a, b=b, out=carry);
+
+    // Common Gate for NAND and AND
+    // Nand (a=a, b=b, out=commongate);
+    // Exclusively NAND parts:
+    // Nand (a=a, b=commongate, out=t1);
+    // Nand (a=commongate, b=b, out=t0);
+    // Nand (a=t0, b=t1, out=sum);
+    // Exclusively AND part:
+    // Not (in=commongate, out=carry);
+}

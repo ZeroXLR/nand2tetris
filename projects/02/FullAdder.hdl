@@ -1,0 +1,46 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/02/FullAdder.hdl
+
+/**
+ * Computes the sum of three bits.
+ * Straightforward implementation:
+ * {asumb, carry1} = a halfadder b
+ * {sum, carry2} = asumb halfadder c
+ * carry = carry1 or carry2
+ * But, a simplification is possible. Note that
+ * in a halfadder, the carry is calculated by
+ * nanding a and b and then noting it. While in
+ * the or above, the carry inputs are notted
+ * again. Thus, we can simply cut out 4 nand
+ * gates by never noting in the first place and
+ * directly feeding the outputs of the first
+ * two nands inside the halfadders above to the
+ * final nand gate of the or above.
+ */
+
+CHIP FullAdder {
+    IN a, b, c;  // 1-bit inputs
+    OUT sum,     // Right bit of a + b + c
+        carry;   // Left bit of a + b + c
+
+    PARTS:
+    // Put you code here:
+    HalfAdder (a=a, b=b, sum=asumb, carry=carry0);
+    HalfAdder (a=asumb, b=c, sum=sum, carry=carry1);
+    Or        (a=carry0, b=carry1, out=carry);
+
+    /* Nand (a=a, b=b, out=gate1ofhalfadder1);
+     * Nand (a=a, b=gate1ofhalfadder1, out=t00);
+     * Nand (a=gate1ofhalfadder1, b=b, out=t01);
+     * Nand (a=t00, b=t01, out=asumb);
+
+     * Nand (a=asumb, b=c, out=gate2ofhalfadder2);
+     * Nand (a=asumb, b=gate2ofhalfadder2, out=t10);
+     * Nand (a=gate2ofhalfadder2, b=c, out=t11);
+     * Nand (a=t10, b=t11, out=sum);
+
+     * Nand (a=gate1ofhalfadder1, b=gate2ofhalfadder2, out=carry);
+     */
+}

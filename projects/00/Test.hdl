@@ -1,0 +1,9 @@
+CHIP Test {
+    IN c;
+    OUT y[16];
+
+    PARTS:
+    Not   (in=c, out=o0, out=o1, out=o2, out=o3);
+    Not16 (in[0]=o0, in[1]=o1, in[2]=o2, in[3]=o3,
+        in[4..15]=false, out=y);
+}

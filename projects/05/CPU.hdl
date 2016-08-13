@@ -1,0 +1,104 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+
+/**
+ * The Hack CPU (Central Processing unit), consisting of an ALU,
+ * two registers named A and D, and a program counter named PC.
+ * The CPU is designed to fetch and execute instructions written in
+ * the Hack machine language. In particular, functions as follows:
+ * Executes the inputted instruction according to the Hack machine
+ * language specification. The D and A in the language specification
+ * refer to CPU-resident registers, while M refers to the external
+ * memory location addressed by A, i.e. to Memory[A]. The inM input
+ * holds the value of this location. If the current instruction needs
+ * to write a value to M, the value is placed in outM, the address
+ * of the target location is placed in the addressM output, and the
+ * writeM control bit is asserted. (When writeM==0, any value may
+ * appear in outM). The outM and writeM outputs are combinational:
+ * they are affected instantaneously by the execution of the current
+ * instruction. The addressM and pc outputs are clocked: although they
+ * are affected by the execution of the current instruction, they commit
+ * to their new values only in the next time step. If reset==1 then the
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather
+ * than to the address resulting from executing the current instruction.
+ */
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M?
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+    // Put your code here:
+
+    /*
+        Instruction decoding Mux:
+        if (sel == 1) we are reading a C-instruction; so:
+            emit the instructions to their respective destinations unchanged
+        else if (sel == 0) we are reading an A-instruction; so:
+            1. emit 0 for all the jump-bits (so that no jumps will occur)
+            2. emit 0s for d3 and d2 as we are neither writing to memory nor
+               storing any computations in D
+            3. emit 1 for d1 because we need to load A with the
+               value / memory address
+            4. emit any choice series of bits for the comp-bits. The a bit and the
+               two unused bits are set to 1. All of these tell the ALU to compute
+               an arbitrary non-instruction
+            5. emit the unchanged value for the leftmost bit which is 1 anyway
+    */
+    Mux16 (a[0..4]=false, a[5]=true, a[6..8]=false, a[9..14]=true, a[15]=instruction[15],
+        b=instruction, sel=instruction[15], out[0]=j3, out[1]=j2, out[2]=j1,
+        out[3]=writeM, out[4]=loadofD, out[5]=loadofA, out[12]=AorMdecider,
+        out[6]=tono, out[7]=tof, out[8]=tony, out[9]=tozy, out[10]=tonx, out[11]=tozx);
+
+    /*
+        ALU block:
+        Implementing this is easy if one watches the lectures. It is a near exact
+        implementation of the diagram in the videos. The only new additions are:
+        1. the inputs of the control bits into various parts of the block; this is
+           quite easy to do after a few minutes of staring at the Hack computer's
+           instruction format in Chapter 4
+        2. an Or and Not block at the end. This last block computes ~(zr or ng);
+           semantically, this indicates whether the ALU output is strictly larger
+           than zero (because the output is larger iff it is neither zero nor less
+           than the same). This gives us three bits ng0, zr0 (taken directly from
+           the ALU) and gt0 (the output of the aforementioned block) that we can
+           now compare to j1, j2 and j3 to decide whether to do a jump or not.
+    */
+    Mux16 (a=instruction, b=ALUbacktoA, sel=instruction[15], out=toA);
+    ARegister (in=toA, load=loadofA,
+        out=AtoALUMux, out=AtoPC, out[0..14]=addressM);
+    Mux16 (a=AtoALUMux, b=inM, sel=AorMdecider, out=AorMdecision);
+    DRegister (in=ALUbacktoD, load=loadofD, out=DtoALU);
+    ALU(x=DtoALU, y=AorMdecision, zx=tozx, nx=tonx, zy=tozy, ny=tony, f=tof, no=tono,
+        out=outM, out=ALUbacktoA, out=ALUbacktoD,
+        zr=eq0, ng=lt0, zr=eq0prime, ng=lt0prime);
+    Or (a=eq0prime, b=lt0prime, out=atleast0);
+    Not (in=atleast0, out=gt0);
+
+    /*
+        PC block:
+        This is easy to implement once you realize that a jump happens iff:
+        1. a jump is actually being requested by the instructions and
+        2. the ALU output actually satisfies the conditions of the requested jump
+        Thus, all we have to do is And each jump bit with the matching ng0, zr0 or
+        gt0 bit from the previous block. Then, we Or the results to get our decision.
+    */
+    And (a=j1, b=lt0, out=jltdecider);
+    And (a=j2, b=eq0, out=jeqdecider);
+    And (a=j3, b=gt0, out=jgtdecider);
+    Or (a=jltdecider, b=jeqdecider, out=jledecider);
+    Or (a=jledecider, b=jgtdecider, out=jmpdecider);
+    Not (in=jmpdecider, out=incdecider);
+    PC (in=AtoPC, load=jmpdecider, inc=incdecider, reset=reset, out[0..14]=pc);
+}

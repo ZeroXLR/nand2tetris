@@ -1,0 +1,31 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Mux.hdl
+
+/**
+ * Multiplexor:
+ * out = a if sel == 0
+ *       b otherwise
+ * a mux(sel) b = (b and (a and ~sel)) or (~b and (a and ~sel))
+ *                                     or
+ *                 (a and (b and sel)) or (~a and (b and sel))
+ *              = (a and ~sel) or (b and sel)
+ *              = ~(a nand ~sel) or ~(b nand sel)
+ *              = ~~(a nand ~sel) nand ~~(b nand sel)
+ *              = (a nand ~sel) nand (b nand sel)
+ * As you can see, there are many levels of simplification here
+ * from the original DNF derived from the truth table.
+ */
+
+CHIP Mux {
+    IN a, b, sel;
+    OUT out;
+
+    PARTS:
+    // Put your code here:
+    Not  (in=sel, out=NOTsel);
+    Nand (a=a, b=NOTsel, out=aNANDNOTsel);
+    Nand (a=b, b=sel, out=bNANDsel);
+    Nand (a=aNANDNOTsel, b=bNANDsel, out=out);
+}
