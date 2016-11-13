@@ -4,7 +4,7 @@
 // Permission granted for educational use.
 
 // Sys.init() calls Sys.main(), stores the return value in temp 1,
-//  and enters an infinite loop.
+// and enters an infinite loop.
 
 function Sys.init 0
 call Sys.main 0
